@@ -15,7 +15,7 @@
 | **Communication Chain** | `DSH -> stdio Pipe -> Node.js Sub-process -> HTTP/WS -> Canvas` | `DSH Host Process -> Native Direct HTTP -> Canvas` |
 | **Process Overhead** | Spawns a dedicated Node process per session with extra memory & CPU | **0 extra processes**, powered purely by native Node.js global fetch |
 | **Invocation Latency** | Pipe serialization & process scheduling overhead (100ms - 300ms) | **< 2ms** sub-millisecond instant dispatch |
-| **Credential Discovery** | Requires manual token configuration in mcpServers | **Fully automatic discovery** from `~/.infinite-canvas/canvas-agent.json` |
+| **Credential Discovery** | Requires manual token configuration in mcpServers | **Fully automatic discovery** from `~/.awesome-canvas/canvas-agent.json` |
 | **Context Protection** | 30+ tools may overload LLM context budget | **Default Core Mode** (10 high-frequency atomic tools) to prevent hallucinations |
 | **Actionable Error Feedback** | Raw stack traces unreadable to models | **Actionable semantic diagnostics** with clear resolution guides |
 

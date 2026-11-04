@@ -16,7 +16,7 @@ export interface CanvasPluginConfig {
   mode?: PluginMode;
   /** 画布网关服务 HTTP 地址。默认自动读取本地配置或使用 http://127.0.0.1:17371。 */
   url?: string;
-  /** 画布网关访问鉴权令牌。默认自动读取 ~/.infinite-canvas/canvas-agent.json。 */
+  /** 画布网关访问鉴权令牌。默认自动读取 ~/.awesome-canvas/canvas-agent.json。 */
   token?: string;
   /**
    * 注册到 DSH 的工具名称前缀。

@@ -5,18 +5,25 @@ import type { CanvasPluginConfig, ResolvedGatewayConfig } from "./types.js";
 
 export const DEFAULT_PORT = 17371;
 export const DEFAULT_GATEWAY_URL = `http://127.0.0.1:${DEFAULT_PORT}`;
-export const CONFIG_DIR = path.join(os.homedir(), ".infinite-canvas");
+export const CONFIG_DIR = path.join(os.homedir(), ".awesome-canvas");
 export const CONFIG_FILE = path.join(CONFIG_DIR, "canvas-agent.json");
+export const LEGACY_CONFIG_DIR = path.join(os.homedir(), ".infinite-canvas");
+export const LEGACY_CONFIG_FILE = path.join(LEGACY_CONFIG_DIR, "canvas-agent.json");
 
 /**
- * 从本地磁盘读取 ~/.infinite-canvas/canvas-agent.json 配置。
+ * 从本地磁盘读取 ~/.awesome-canvas/canvas-agent.json 配置（兼容回退 ~/.infinite-canvas）。
  */
 export function readLocalConfigFile(): { url?: string; token?: string } | null {
   try {
-    if (!fs.existsSync(CONFIG_FILE)) {
-      return null;
+    let targetFile = CONFIG_FILE;
+    if (!fs.existsSync(targetFile)) {
+      if (fs.existsSync(LEGACY_CONFIG_FILE)) {
+        targetFile = LEGACY_CONFIG_FILE;
+      } else {
+        return null;
+      }
     }
-    const content = fs.readFileSync(CONFIG_FILE, "utf8");
+    const content = fs.readFileSync(targetFile, "utf8");
     const parsed = JSON.parse(content) as { url?: string; token?: string };
     return {
       url: typeof parsed.url === "string" ? parsed.url : undefined,
