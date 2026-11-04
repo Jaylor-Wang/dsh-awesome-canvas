@@ -3,13 +3,16 @@ export declare const DEFAULT_PORT = 17371;
 export declare const DEFAULT_GATEWAY_URL = "http://127.0.0.1:17371";
 export declare const CONFIG_DIR: string;
 export declare const CONFIG_FILE: string;
+export type LocalAgentConfigFile = {
+    url?: string;
+    token?: string;
+    mode?: "core" | "all";
+    timeoutSeconds?: number;
+};
 /**
  * 从本地磁盘读取 ~/.awesome-canvas/canvas-agent.json 配置。
  */
-export declare function readLocalConfigFile(): {
-    url?: string;
-    token?: string;
-} | null;
+export declare function readLocalConfigFile(): LocalAgentConfigFile | null;
 /**
  * 解析并确定最终网关地址与 Token。
  * 优先级：显式传入配置 > 本地 canvas-agent.json 配置文件 > 默认配置。

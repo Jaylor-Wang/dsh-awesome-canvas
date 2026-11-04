@@ -8,19 +8,28 @@ export const DEFAULT_GATEWAY_URL = `http://127.0.0.1:${DEFAULT_PORT}`;
 export const CONFIG_DIR = path.join(os.homedir(), ".awesome-canvas");
 export const CONFIG_FILE = path.join(CONFIG_DIR, "canvas-agent.json");
 
+export type LocalAgentConfigFile = {
+  url?: string;
+  token?: string;
+  mode?: "core" | "all";
+  timeoutSeconds?: number;
+};
+
 /**
  * 从本地磁盘读取 ~/.awesome-canvas/canvas-agent.json 配置。
  */
-export function readLocalConfigFile(): { url?: string; token?: string } | null {
+export function readLocalConfigFile(): LocalAgentConfigFile | null {
   try {
     if (!fs.existsSync(CONFIG_FILE)) {
       return null;
     }
     const content = fs.readFileSync(CONFIG_FILE, "utf8");
-    const parsed = JSON.parse(content) as { url?: string; token?: string };
+    const parsed = JSON.parse(content) as LocalAgentConfigFile;
     return {
       url: typeof parsed.url === "string" ? parsed.url : undefined,
       token: typeof parsed.token === "string" ? parsed.token : undefined,
+      mode: parsed.mode === "core" || parsed.mode === "all" ? parsed.mode : undefined,
+      timeoutSeconds: typeof parsed.timeoutSeconds === "number" ? parsed.timeoutSeconds : undefined,
     };
   } catch {
     return null;

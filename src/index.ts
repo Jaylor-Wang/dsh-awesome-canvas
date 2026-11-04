@@ -8,7 +8,7 @@
  */
 
 import { CanvasGatewayClient } from "./client.js";
-import { Config, resolveGatewayConfig } from "./config.js";
+import { Config, readLocalConfigFile, resolveGatewayConfig } from "./config.js";
 import { registerCanvasTools } from "./tools.js";
 import type { CanvasPluginConfig } from "./types.js";
 
@@ -36,12 +36,20 @@ export function apply(
     return;
   }
 
-  // 1. 解析网关地址与凭据
+  // 1. 解析网关地址与凭据（支持继承 ~/.awesome-canvas/canvas-agent.json 里的 mode 与 timeoutSeconds）
+  const localConfig = readLocalConfigFile();
   const gatewayConfig = resolveGatewayConfig(userConfig);
-  const client = new CanvasGatewayClient(gatewayConfig, userConfig.timeoutMs ?? 60000);
+  const effectiveMode = userConfig.mode || localConfig?.mode || "core";
+  const effectiveTimeoutMs = userConfig.timeoutMs ?? (localConfig?.timeoutSeconds ? localConfig.timeoutSeconds * 1000 : 60000);
+  const client = new CanvasGatewayClient(gatewayConfig, effectiveTimeoutMs);
 
   // 2. 原生注册画布工具集
-  const unregister = registerCanvasTools(ctx.tools, client, userConfig);
+  const mergedConfig: CanvasPluginConfig = {
+    ...userConfig,
+    mode: effectiveMode,
+    timeoutMs: effectiveTimeoutMs,
+  };
+  const unregister = registerCanvasTools(ctx.tools, client, mergedConfig);
 
   // 3. 注册生命周期清理闭包
   if (typeof ctx.effect === "function") {
@@ -56,8 +64,7 @@ export function apply(
   void client.probeHealth().then((health) => {
     const logger = ctx.logger;
     if (health.ok) {
-      const mode = userConfig.mode || "core";
-      const msg = `[dsh-awesome-canvas] 成功直连 Awesome Canvas 网关 (${gatewayConfig.url}) [模式: ${mode}, 工具已就绪]`;
+      const msg = `[dsh-awesome-canvas] 成功直连 Awesome Canvas 网关 (${gatewayConfig.url}) [模式: ${effectiveMode}, 工具已就绪]`;
       if (logger?.info) {
         logger.info(msg);
       } else {
