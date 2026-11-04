@@ -79,14 +79,22 @@ pnpm add file:E:/Github/dsh-awesome-canvas
 
 ### 2. 自定义参数覆盖（可选）
 
-如需修改模式（切换为全量 30 工具）、修改前缀或覆盖连接地址，只需在 `~/.dsh/profiles/web/cordis.patch.yml` 中指定 bundle id `awesome-canvas` 覆盖特定字段：
+如需修改模式（切换为全量 30 工具）、修改前缀或调整超时，只需在 `~/.dsh/profiles/web/cordis.patch.yml` 中指定 bundle id `awesome-canvas` 按需覆盖特定字段：
 
+**常用场景 A：开启全量 30 工具（按需覆盖，无需书写默认项）**
 ```yaml
 - id: awesome-canvas
   config:
-    mode: all           # 选项: 'core' (推荐 10 个核心工具) 或 'all' (全量 30 个工具)
-    prefix: canvas_     # 工具名前缀（默认为 'canvas_'）
-    timeoutMs: 120000   # 单次调用超时（毫秒，默认 60000，长任务可按需调大）
+    mode: all           # 切换为全量 30 个工具（默认是 core 精简 10 工具）
+```
+
+**高级场景 B：自定义前缀与长超时**
+```yaml
+- id: awesome-canvas
+  config:
+    mode: all
+    prefix: awesome_    # 自定义工具名前缀（默认即为 'canvas_'，仅在有命名冲突时自定义）
+    timeoutMs: 120000   # 自定义超时（毫秒，默认 60000，长任务可按需调大）
 ```
 
 > **注意**：已通过 DSH 安装时，请直接使用 `- id: awesome-canvas` 进行字段覆盖，切勿使用 `- insert:` 重复引入同名插件，以避免重复实例化。

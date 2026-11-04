@@ -79,12 +79,20 @@ No manual configuration edits required! When installed via DSH, the plugin is lo
 
 To switch to all 30 granular tools, change tool prefixes, or adjust timeout, override specific fields targeting bundle id `awesome-canvas` in `~/.dsh/profiles/web/cordis.patch.yml`:
 
+**Typical Scenario A: Enable All 30 Granular Tools (Only override needed fields)**
 ```yaml
 - id: awesome-canvas
   config:
-    mode: all           # Options: 'core' (recommended 10 tools) or 'all' (all 30 tools)
-    prefix: canvas_     # Tool name prefix (defaults to 'canvas_')
-    timeoutMs: 120000   # Per-call timeout in milliseconds (defaults to 60000; adjust for long-running jobs)
+    mode: all           # Switch to all 30 granular tools (defaults to 'core' with 10 tools)
+```
+
+**Advanced Scenario B: Custom Tool Prefix & Longer Timeout**
+```yaml
+- id: awesome-canvas
+  config:
+    mode: all
+    prefix: awesome_    # Custom tool prefix (defaults to 'canvas_', customize only on conflict)
+    timeoutMs: 120000   # Custom per-call timeout in ms (defaults to 60000; adjust for long tasks)
 ```
 
 > **Note**: When installed via DSH, always use `- id: awesome-canvas` for property overrides. Do not use `- insert:` to avoid creating duplicate plugin instances.
