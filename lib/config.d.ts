@@ -3,10 +3,8 @@ export declare const DEFAULT_PORT = 17371;
 export declare const DEFAULT_GATEWAY_URL = "http://127.0.0.1:17371";
 export declare const CONFIG_DIR: string;
 export declare const CONFIG_FILE: string;
-export declare const LEGACY_CONFIG_DIR: string;
-export declare const LEGACY_CONFIG_FILE: string;
 /**
- * 从本地磁盘读取 ~/.awesome-canvas/canvas-agent.json 配置（兼容回退 ~/.infinite-canvas）。
+ * 从本地磁盘读取 ~/.awesome-canvas/canvas-agent.json 配置。
  */
 export declare function readLocalConfigFile(): {
     url?: string;
