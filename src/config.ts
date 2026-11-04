@@ -64,7 +64,7 @@ try {
     url: z.string().default("").description("画布网关 HTTP 地址，留空则自动探测本地网关"),
     token: z.string().default("").description("画布网关 Token，留空则自动读取本地凭据"),
     prefix: z.string().default("canvas_").description("注册到 DSH 的工具名称前缀，如 'canvas_' 或 'awesome_canvas_'"),
-    timeoutMs: z.number().step(1).min(1000).default(30000).description("单次请求网关超时时间（毫秒）"),
+    timeoutMs: z.number().step(1).min(1000).default(60000).description("单次请求网关超时时间（毫秒）"),
   });
 } catch {
   // 如果缺少 @deepseek-ai/schemastery 则保持平退默认
@@ -74,7 +74,7 @@ try {
     url: "",
     token: "",
     prefix: "canvas_",
-    timeoutMs: 30000,
+    timeoutMs: 60000,
   };
 }
 

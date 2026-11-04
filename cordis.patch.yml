@@ -6,4 +6,4 @@
         enabled: true
         mode: core
         prefix: canvas_
-        timeoutMs: 30000
+        timeoutMs: 60000

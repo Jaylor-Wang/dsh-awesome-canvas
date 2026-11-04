@@ -38,7 +38,7 @@ export function apply(
 
   // 1. 解析网关地址与凭据
   const gatewayConfig = resolveGatewayConfig(userConfig);
-  const client = new CanvasGatewayClient(gatewayConfig, userConfig.timeoutMs ?? 30000);
+  const client = new CanvasGatewayClient(gatewayConfig, userConfig.timeoutMs ?? 60000);
 
   // 2. 原生注册画布工具集
   const unregister = registerCanvasTools(ctx.tools, client, userConfig);

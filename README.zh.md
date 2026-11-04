@@ -110,7 +110,7 @@ pnpm add file:E:/Github/dsh-awesome-canvas
 | `url` | `string` | `""` | 网关地址。留空则自动读取 `~/.awesome-canvas/canvas-agent.json` |
 | `token` | `string` | `""` | 网关 Token。留空则自动读取 `~/.awesome-canvas/canvas-agent.json` |
 | `prefix` | `string` | `'canvas_'` | 注册至 DSH 的工具名称前缀 |
-| `timeoutMs` | `number` | `30000` | 单次工具调用 HTTP 超时时间（毫秒） |
+| `timeoutMs` | `number` | `60000` | 单次工具调用 HTTP 超时时间（毫秒，默认 60 秒以兼容长等待任务） |
 
 ---
 

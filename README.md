@@ -108,7 +108,7 @@ If the gateway is hosted on a remote local-network server or custom port:
 | `url` | `string` | `""` | Gateway URL. When empty, automatically read from `~/.awesome-canvas/canvas-agent.json`. |
 | `token` | `string` | `""` | Gateway Token. When empty, automatically read from `~/.awesome-canvas/canvas-agent.json`. |
 | `prefix` | `string` | `'canvas_'` | Tool name prefix registered into DSH. |
-| `timeoutMs` | `number` | `30000` | HTTP request timeout per tool invocation (ms). |
+| `timeoutMs` | `number` | `60000` | HTTP request timeout per tool invocation (ms, default 60s for long generation tasks). |
 
 ---
 

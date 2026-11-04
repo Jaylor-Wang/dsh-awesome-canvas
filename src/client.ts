@@ -5,7 +5,7 @@ export class CanvasGatewayClient {
   private token: string;
   private timeoutMs: number;
 
-  constructor(config: ResolvedGatewayConfig, timeoutMs = 30000) {
+  constructor(config: ResolvedGatewayConfig, timeoutMs = 60000) {
     this.url = config.url.replace(/\/+$/, "");
     this.token = config.token;
     this.timeoutMs = timeoutMs;
@@ -120,10 +120,16 @@ export class CanvasGatewayClient {
   private async rawFetch(pathname: string, init: RequestInit, externalSignal?: AbortSignal): Promise<Response> {
     const targetUrl = `${this.url}${pathname.startsWith("/") ? pathname : `/${pathname}`}`;
     const timeoutController = new AbortController();
-    const timer = setTimeout(() => timeoutController.abort(), this.timeoutMs);
+    let isTimeout = false;
+    const timer = setTimeout(() => {
+      isTimeout = true;
+      timeoutController.abort(new Error(`TIMEOUT_${this.timeoutMs}`));
+    }, this.timeoutMs);
 
     // 将外部 signal 与超时 controller 级联
-    const onAbort = () => timeoutController.abort();
+    const onAbort = () => {
+      timeoutController.abort(externalSignal?.reason || new Error("CALLER_ABORTED"));
+    };
     if (externalSignal) {
       if (externalSignal.aborted) {
         clearTimeout(timer);
@@ -137,6 +143,16 @@ export class CanvasGatewayClient {
         ...init,
         signal: timeoutController.signal,
       });
+    } catch (error) {
+      if (isTimeout) {
+        throw new Error(
+          `[Awesome Canvas 调用超时] 单次工具调用超过了 ${this.timeoutMs}ms 超时上限。\n如为 AI 生成或大资源下载等耗时任务，可在 DSH 配置中调大 timeoutMs，或在调用 generation_get_status 时通过 wait/timeoutSeconds 分步轮询。`
+        );
+      }
+      if (externalSignal?.aborted) {
+        throw new Error("Tool execution aborted by caller");
+      }
+      throw error;
     } finally {
       clearTimeout(timer);
       if (externalSignal) {
@@ -150,11 +166,13 @@ export class CanvasGatewayClient {
    */
   private normalizeNetworkError(error: unknown): Error {
     const message = error instanceof Error ? error.message : String(error);
+    if (message.startsWith("[Awesome Canvas")) {
+      return error instanceof Error ? error : new Error(message);
+    }
     if (
       message.includes("ECONNREFUSED") ||
       message.includes("fetch failed") ||
-      message.includes("ENOTFOUND") ||
-      message.includes("abort")
+      message.includes("ENOTFOUND")
     ) {
       return new Error(
         `[Awesome Canvas 网关未就绪] 无法连接到本地网关 (${this.url})。\n请确认前端开发服务已启动（在 Awesome-Canvas 根目录运行 npm run dev 会随前端自动拉起网关并在 17371 端口监听）。`
