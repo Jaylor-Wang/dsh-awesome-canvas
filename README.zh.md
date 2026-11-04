@@ -3,8 +3,12 @@
 > **DeepSeek Harness (DSH) 原生直连 Awesome Canvas 极限画布插件**  
 > 绕过外部 stdio 子进程管道，在 DSH 宿主内部原生直连 `127.0.0.1:17371` 画布常驻网关，实现零延迟、零进程开销的毫秒级双向画布调度。
 
-[![npm version](https://img.shields.io/npm/v/dsh-awesome-canvas.svg)](https://www.npmjs.com/package/dsh-awesome-canvas)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![npm version](https://img.shields.io/npm/v/dsh-awesome-canvas?color=blue)](https://www.npmjs.com/package/dsh-awesome-canvas)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![GitHub release](https://img.shields.io/github/v/release/Jaylor-Wang/dsh-awesome-canvas.svg)](https://github.com/Jaylor-Wang/dsh-awesome-canvas/releases)
+[![DeepSeek Harness Compatibility](https://img.shields.io/badge/DSH-compatible-brightgreen)](https://github.com/deepseek-ai/deepseek-harness)
+
+[English](README.md) | [中文](README.zh.md)
 
 ---
 

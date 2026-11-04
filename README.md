@@ -3,8 +3,12 @@
 > **Native Zero-Latency Cordis Direct Plugin for Awesome Canvas in DeepSeek Harness (DSH)**  
 > Bypasses external stdio sub-processes to communicate directly with the Awesome Canvas resident gateway at `127.0.0.1:17371`, providing zero-latency, sub-millisecond bidirectional canvas control.
 
-[![npm version](https://img.shields.io/npm/v/dsh-awesome-canvas.svg)](https://www.npmjs.com/package/dsh-awesome-canvas)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![npm version](https://img.shields.io/npm/v/dsh-awesome-canvas?color=blue)](https://www.npmjs.com/package/dsh-awesome-canvas)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![GitHub release](https://img.shields.io/github/v/release/Jaylor-Wang/dsh-awesome-canvas.svg)](https://github.com/Jaylor-Wang/dsh-awesome-canvas/releases)
+[![DeepSeek Harness Compatibility](https://img.shields.io/badge/DSH-compatible-brightgreen)](https://github.com/deepseek-ai/deepseek-harness)
+
+[English](README.md) | [中文](README.zh.md)
 
 ---
 
