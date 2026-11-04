@@ -84,7 +84,7 @@ To switch to all 30 granular tools, change tool prefixes, or adjust timeout, ove
   config:
     mode: all           # Options: 'core' (recommended 10 tools) or 'all' (all 30 tools)
     prefix: canvas_     # Tool name prefix (defaults to 'canvas_')
-    timeoutMs: 60000    # Per-call timeout in milliseconds
+    timeoutMs: 120000   # Per-call timeout in milliseconds (defaults to 60000; adjust for long-running jobs)
 ```
 
 > **Note**: When installed via DSH, always use `- id: awesome-canvas` for property overrides. Do not use `- insert:` to avoid creating duplicate plugin instances.

@@ -85,8 +85,8 @@ pnpm add file:E:/Github/dsh-awesome-canvas
 - id: awesome-canvas
   config:
     mode: all           # 选项: 'core' (推荐 10 个核心工具) 或 'all' (全量 30 个工具)
-    prefix: canvas_     # 工具名前缀，默认为 'canvas_'
-    timeoutMs: 60000    # 单次调用超时（毫秒）
+    prefix: canvas_     # 工具名前缀（默认为 'canvas_'）
+    timeoutMs: 120000   # 单次调用超时（毫秒，默认 60000，长任务可按需调大）
 ```
 
 > **注意**：已通过 DSH 安装时，请直接使用 `- id: awesome-canvas` 进行字段覆盖，切勿使用 `- insert:` 重复引入同名插件，以避免重复实例化。
