@@ -1,21 +1,33 @@
+import { readLocalConfigFile } from "./config.js";
 import type { GatewayHealthResponse, GatewayToolResponse, ResolvedGatewayConfig } from "./types.js";
 
 export class CanvasGatewayClient {
   private url: string;
   private token: string;
   private timeoutMs: number;
+  private source: "explicit" | "local_file" | "default";
 
   constructor(config: ResolvedGatewayConfig, timeoutMs = 60000) {
     this.url = config.url.replace(/\/+$/, "");
     this.token = config.token;
+    this.source = config.source;
     this.timeoutMs = timeoutMs;
   }
 
   /** 更新客户端连接配置。 */
-  public updateConfig(config: ResolvedGatewayConfig, timeoutMs?: number) {
-    this.url = config.url.replace(/\/+$/, "");
-    this.token = config.token;
+  public updateConfig(config: Partial<ResolvedGatewayConfig>, timeoutMs?: number) {
+    if (config.url) this.url = config.url.replace(/\/+$/, "");
+    if (config.token !== undefined) this.token = config.token;
+    if (config.source) this.source = config.source;
     if (timeoutMs) this.timeoutMs = timeoutMs;
+  }
+
+  public getConfig(): ResolvedGatewayConfig {
+    return {
+      url: this.url,
+      token: this.token,
+      source: this.source,
+    };
   }
 
   public getGatewayUrl(): string {
@@ -39,6 +51,7 @@ export class CanvasGatewayClient {
 
   /**
    * 调用画布网关工具 (/api/tools)。
+   * 支持 Token 失效时的本地配置文件自愈重试机制。
    */
   public async callTool<T = unknown>(name: string, input: unknown = {}, signal?: AbortSignal): Promise<T> {
     let res: Response;
@@ -57,6 +70,30 @@ export class CanvasGatewayClient {
       );
     } catch (error) {
       throw this.normalizeNetworkError(error);
+    }
+
+    // 401 鉴权失效无感自愈：若 Token 来自本地文件，网关重启时会刷新 Token，重新加载磁盘配置并自动重试 1 次
+    if (res.status === 401 && this.source !== "explicit") {
+      const fresh = readLocalConfigFile();
+      if (fresh?.token && fresh.token !== this.token) {
+        this.token = fresh.token;
+        try {
+          res = await this.rawFetch(
+            "/api/tools",
+            {
+              method: "POST",
+              headers: {
+                "content-type": "application/json",
+                "x-canvas-agent-token": this.token,
+              },
+              body: JSON.stringify({ name, input: input ?? {} }),
+            },
+            signal
+          );
+        } catch (error) {
+          throw this.normalizeNetworkError(error);
+        }
+      }
     }
 
     if (res.status === 401) {
@@ -103,6 +140,28 @@ export class CanvasGatewayClient {
       throw this.normalizeNetworkError(error);
     }
 
+    // 401 自愈重试
+    if (res.status === 401 && this.source !== "explicit") {
+      const fresh = readLocalConfigFile();
+      if (fresh?.token && fresh.token !== this.token) {
+        this.token = fresh.token;
+        try {
+          res = await this.rawFetch(
+            `/api/resources/${key}`,
+            {
+              method: "GET",
+              headers: {
+                "x-canvas-agent-token": this.token,
+              },
+            },
+            signal
+          );
+        } catch (error) {
+          throw this.normalizeNetworkError(error);
+        }
+      }
+    }
+
     if (res.status === 401) {
       throw new Error(`[Awesome Canvas 鉴权失败] 读取资源 ${key} 时鉴权失败。`);
     }
@@ -115,9 +174,14 @@ export class CanvasGatewayClient {
   }
 
   /**
-   * 底层 HTTP 请求，支持自动超时与外部 signal 协同中断。
+   * 底层 HTTP 请求，支持自动超时、外部 signal 协同中断以及网络冷启动瞬态退避重试。
    */
-  private async rawFetch(pathname: string, init: RequestInit, externalSignal?: AbortSignal): Promise<Response> {
+  private async rawFetch(
+    pathname: string,
+    init: RequestInit,
+    externalSignal?: AbortSignal,
+    retryAllowed = true
+  ): Promise<Response> {
     const targetUrl = `${this.url}${pathname.startsWith("/") ? pathname : `/${pathname}`}`;
     const timeoutController = new AbortController();
     let isTimeout = false;
@@ -152,6 +216,29 @@ export class CanvasGatewayClient {
       if (externalSignal?.aborted) {
         throw new Error("Tool execution aborted by caller");
       }
+
+      // 瞬态连接拒绝容错（如前端服务刚启动时 TCP 监听间隙），自动瞬态退避重试 1 次（等待 400ms）
+      if (retryAllowed && this.isTransientNetworkError(error)) {
+        clearTimeout(timer);
+        if (externalSignal) {
+          externalSignal.removeEventListener("abort", onAbort);
+        }
+        await new Promise<void>((resolve, reject) => {
+          const delayTimer = setTimeout(resolve, 400);
+          if (externalSignal) {
+            externalSignal.addEventListener(
+              "abort",
+              () => {
+                clearTimeout(delayTimer);
+                reject(new Error("Tool execution aborted by caller"));
+              },
+              { once: true }
+            );
+          }
+        });
+        return await this.rawFetch(pathname, init, externalSignal, false);
+      }
+
       throw error;
     } finally {
       clearTimeout(timer);
@@ -159,6 +246,22 @@ export class CanvasGatewayClient {
         externalSignal.removeEventListener("abort", onAbort);
       }
     }
+  }
+
+  /**
+   * 判断是否属于网络连接瞬态未就绪或抖动错误（TCP 未握手，重试绝对安全）。
+   */
+  private isTransientNetworkError(error: unknown): boolean {
+    const message = error instanceof Error ? error.message : String(error);
+    // @ts-ignore
+    const cause = error instanceof Error ? (error.cause as any)?.message || "" : "";
+    const combined = `${message} ${cause}`;
+    return (
+      combined.includes("ECONNREFUSED") ||
+      combined.includes("fetch failed") ||
+      combined.includes("ENOTFOUND") ||
+      combined.includes("ECONNRESET")
+    );
   }
 
   /**

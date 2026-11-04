@@ -24,7 +24,7 @@ export interface CanvasPluginConfig {
    * 也可指定为 "awesome_canvas_"。
    */
   prefix?: string;
-  /** 单次工具调用 HTTP 超时时间（毫秒）。默认为 30000ms（30 秒）。 */
+  /** 单次工具调用 HTTP 超时时间（毫秒）。默认为 60000ms（60 秒）。 */
   timeoutMs?: number;
 }
 
