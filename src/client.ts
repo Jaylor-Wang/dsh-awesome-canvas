@@ -1,0 +1,165 @@
+import type { GatewayHealthResponse, GatewayToolResponse, ResolvedGatewayConfig } from "./types.js";
+
+export class CanvasGatewayClient {
+  private url: string;
+  private token: string;
+  private timeoutMs: number;
+
+  constructor(config: ResolvedGatewayConfig, timeoutMs = 30000) {
+    this.url = config.url.replace(/\/+$/, "");
+    this.token = config.token;
+    this.timeoutMs = timeoutMs;
+  }
+
+  /** 更新客户端连接配置。 */
+  public updateConfig(config: ResolvedGatewayConfig, timeoutMs?: number) {
+    this.url = config.url.replace(/\/+$/, "");
+    this.token = config.token;
+    if (timeoutMs) this.timeoutMs = timeoutMs;
+  }
+
+  public getGatewayUrl(): string {
+    return this.url;
+  }
+
+  /**
+   * 探活网关健康状态。
+   */
+  public async probeHealth(signal?: AbortSignal): Promise<GatewayHealthResponse> {
+    try {
+      const res = await this.rawFetch("/health", { method: "GET" }, signal);
+      if (!res.ok) {
+        return { ok: false, status: `HTTP ${res.status}` };
+      }
+      return (await res.json()) as GatewayHealthResponse;
+    } catch (err) {
+      return { ok: false, status: "unreachable", error: String(err) };
+    }
+  }
+
+  /**
+   * 调用画布网关工具 (/api/tools)。
+   */
+  public async callTool<T = unknown>(name: string, input: unknown = {}, signal?: AbortSignal): Promise<T> {
+    let res: Response;
+    try {
+      res = await this.rawFetch(
+        "/api/tools",
+        {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            "x-canvas-agent-token": this.token,
+          },
+          body: JSON.stringify({ name, input: input ?? {} }),
+        },
+        signal
+      );
+    } catch (error) {
+      throw this.normalizeNetworkError(error);
+    }
+
+    if (res.status === 401) {
+      throw new Error(`[Awesome Canvas 鉴权失败] 连接令牌不匹配。请确认 ~/.infinite-canvas/canvas-agent.json 或配置项中的 token 是否与当前运行的网关一致。`);
+    }
+
+    let body: GatewayToolResponse<T>;
+    try {
+      body = (await res.json()) as GatewayToolResponse<T>;
+    } catch {
+      throw new Error(`[Awesome Canvas 网关响应异常] 网关返回了非 JSON 格式数据 (HTTP ${res.status})。`);
+    }
+
+    if (!body.ok) {
+      const errMsg = body.error || "未知工具执行错误";
+      if (errMsg.includes("[NO_CANVAS]") || errMsg.includes("当前没有已连接画布")) {
+        throw new Error(
+          `[Awesome Canvas 页面未连接] 画布网关服务正常在线，但当前浏览器中未打开任何画布工程。\n请在浏览器打开 http://localhost:3000 并进入一个项目工程，保持页面开启后再重试。`
+        );
+      }
+      throw new Error(`[Awesome Canvas 工具调用失败] ${errMsg}`);
+    }
+
+    return body.result as T;
+  }
+
+  /**
+   * 获取网关只读内存资源 (/api/resources/:key)。
+   */
+  public async getResource<T = unknown>(key: "state" | "selection", signal?: AbortSignal): Promise<T> {
+    let res: Response;
+    try {
+      res = await this.rawFetch(
+        `/api/resources/${key}`,
+        {
+          method: "GET",
+          headers: {
+            "x-canvas-agent-token": this.token,
+          },
+        },
+        signal
+      );
+    } catch (error) {
+      throw this.normalizeNetworkError(error);
+    }
+
+    if (res.status === 401) {
+      throw new Error(`[Awesome Canvas 鉴权失败] 读取资源 ${key} 时鉴权失败。`);
+    }
+
+    const body = (await res.json()) as GatewayToolResponse<T>;
+    if (!body.ok) {
+      throw new Error(body.error || `读取资源 ${key} 失败`);
+    }
+    return body.result as T;
+  }
+
+  /**
+   * 底层 HTTP 请求，支持自动超时与外部 signal 协同中断。
+   */
+  private async rawFetch(pathname: string, init: RequestInit, externalSignal?: AbortSignal): Promise<Response> {
+    const targetUrl = `${this.url}${pathname.startsWith("/") ? pathname : `/${pathname}`}`;
+    const timeoutController = new AbortController();
+    const timer = setTimeout(() => timeoutController.abort(), this.timeoutMs);
+
+    // 将外部 signal 与超时 controller 级联
+    const onAbort = () => timeoutController.abort();
+    if (externalSignal) {
+      if (externalSignal.aborted) {
+        clearTimeout(timer);
+        throw new Error("Tool execution aborted by caller");
+      }
+      externalSignal.addEventListener("abort", onAbort, { once: true });
+    }
+
+    try {
+      return await fetch(targetUrl, {
+        ...init,
+        signal: timeoutController.signal,
+      });
+    } finally {
+      clearTimeout(timer);
+      if (externalSignal) {
+        externalSignal.removeEventListener("abort", onAbort);
+      }
+    }
+  }
+
+  /**
+   * 将 Fetch 抛出的底层网络异常包装成对模型及用户友好的提示。
+   */
+  private normalizeNetworkError(error: unknown): Error {
+    const message = error instanceof Error ? error.message : String(error);
+    if (
+      message.includes("ECONNREFUSED") ||
+      message.includes("fetch failed") ||
+      message.includes("ENOTFOUND") ||
+      message.includes("abort")
+    ) {
+      return new Error(
+        `[Awesome Canvas 网关未就绪] 无法连接到本地网关 (${this.url})。\n请确认前端开发服务已启动（在 Awesome-Canvas 根目录运行 npm run dev 会随前端自动拉起网关并在 17371 端口监听）。`
+      );
+    }
+    return new Error(`[Awesome Canvas 网关连接错误] ${message}`);
+  }
+}
