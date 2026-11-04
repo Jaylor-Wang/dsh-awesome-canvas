@@ -49,36 +49,68 @@
 
 ## 🚀 安装与在 DSH 中配置
 
-### 方式一：在当前 DSH Profile 中一键启用（推荐）
+### 安装方式
 
-1. 在你的 DSH Profile 目录（如 `~/.dsh/profiles/web/`）中安装本插件：
+#### 方式 A：通过 DSH CLI（推荐）
 ```bash
+dsh plugin --profile web add dsh-awesome-canvas
+```
+
+#### 方式 B：通过包管理器
+```bash
+# 在当前 DSH Profile 目录（如 ~/.dsh/profiles/web/）下执行：
+pnpm add dsh-awesome-canvas
+# 或 npm：
 npm install dsh-awesome-canvas
+# 本地开发时直接软链本地代码仓库：
+pnpm add file:E:/Github/dsh-awesome-canvas
 ```
 
-2. 在 `~/.dsh/profiles/web/cordis.patch.yml`（或 `cordis.yml`）中添加加载项：
-```yaml
-- insert:
-    - id: awesome-canvas
-      name: dsh-awesome-canvas
-      config:
-        enabled: true
-        mode: core          # 可选: 'core' (推荐 10 个高频工具) 或 'all' (全量 30 个工具)
-        prefix: canvas_     # 可选: 工具名前缀，默认为 'canvas_'
-        timeoutMs: 30000    # 单次调用超时时间（毫秒）
-```
+---
 
-3. 重启或刷新 DSH Web 控制台即可自动生效！DSH 启动时会自动后台探活画布网关并打印就绪提示。
+## ⚙️ 配置说明
 
-### 方式二：手动指定网关地址与 Token（可选）
-如果你的网关运行在自定义端口或局域网远程机器上，可显式指定配置覆盖自动探测：
+### 1. 零配置模式（Zero-Config，默认推荐）
+
+无需修改任何配置文件！插件通过 DSH 安装后即作为 Profile Bundle 自动挂载。
+- **网关地址与凭据**：全自动读取 `~/.awesome-canvas/canvas-agent.json`。
+- **默认模式**：`mode: "core"`（自动挂载 10 个高频原子工具）。
+- **完全开箱即用，无需修改 `cordis.patch.yml`**。
+
+### 2. 自定义参数覆盖（可选）
+
+如需修改模式（切换为全量 30 工具）、修改前缀或覆盖连接地址，只需在 `~/.dsh/profiles/web/cordis.patch.yml` 中指定 bundle id `awesome-canvas` 覆盖特定字段：
+
 ```yaml
 - id: awesome-canvas
-  name: dsh-awesome-canvas
   config:
-    url: 'http://127.0.0.1:17371'
+    mode: all           # 选项: 'core' (推荐 10 个核心工具) 或 'all' (全量 30 个工具)
+    prefix: canvas_     # 工具名前缀，默认为 'canvas_'
+    timeoutMs: 60000    # 单次调用超时（毫秒）
+```
+
+> **注意**：已通过 DSH 安装时，请直接使用 `- id: awesome-canvas` 进行字段覆盖，切勿使用 `- insert:` 重复引入同名插件，以避免重复实例化。
+
+### 3. 自定义网关地址与 Token（可选）
+
+若网关部署在局域网其它机器或指定端口：
+```yaml
+- id: awesome-canvas
+  config:
+    url: 'http://192.168.1.100:17371'
     token: '你的自定义Token'
 ```
+
+### 配置项参数表
+
+| 字段 | 类型 | 默认值 | 说明 |
+| :--- | :--- | :--- | :--- |
+| `enabled` | `boolean` | `true` | 是否启用 Awesome Canvas 直连插件 |
+| `mode` | `'core' \| 'all'` | `'core'` | 工具集暴露模式：`core`（10个高频推荐）或 `all`（30个全量工具） |
+| `url` | `string` | `""` | 网关地址。留空则自动读取 `~/.awesome-canvas/canvas-agent.json` |
+| `token` | `string` | `""` | 网关 Token。留空则自动读取 `~/.awesome-canvas/canvas-agent.json` |
+| `prefix` | `string` | `'canvas_'` | 注册至 DSH 的工具名称前缀 |
+| `timeoutMs` | `number` | `30000` | 单次工具调用 HTTP 超时时间（毫秒） |
 
 ---
 

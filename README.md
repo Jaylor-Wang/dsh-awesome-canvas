@@ -47,35 +47,68 @@ Includes all 30 granular tools (individual node updates, translations, resizing,
 
 ## 🚀 Installation & Configuration in DSH
 
-### Option 1: One-Click Integration into DSH Profile (Recommended)
+### Installation
 
-1. Install the plugin in your DSH profile directory (e.g. `~/.dsh/profiles/web/`):
+#### Method A: Via DSH CLI (Recommended)
 ```bash
+dsh plugin --profile web add dsh-awesome-canvas
+```
+
+#### Method B: Via Package Manager
+```bash
+# In your active DSH profile directory (e.g. ~/.dsh/profiles/web/):
+pnpm add dsh-awesome-canvas
+# or npm:
 npm install dsh-awesome-canvas
+# or link local source directory during development:
+pnpm add file:E:/Github/dsh-awesome-canvas
 ```
 
-2. Add the plugin entry to `~/.dsh/profiles/web/cordis.patch.yml` (or `cordis.yml`):
-```yaml
-- insert:
-    - id: awesome-canvas
-      name: dsh-awesome-canvas
-      config:
-        enabled: true
-        mode: core          # Options: 'core' (recommended 10 tools) or 'all' (all 30 tools)
-        prefix: canvas_     # Optional: tool name prefix (defaults to 'canvas_')
-        timeoutMs: 30000    # Per-call timeout in milliseconds
-```
+---
 
-3. Restart or refresh your DSH Web GUI. The plugin will automatically probe the resident gateway in the background.
+## ⚙️ Configuration
 
-### Option 2: Custom Endpoint and Token Override
+### 1. Zero-Config Mode (Default & Recommended)
+
+No manual configuration edits required! When installed via DSH, the plugin is loaded automatically as a profile bundle.
+- **Gateway Endpoint & Token**: Automatically discovered from `~/.awesome-canvas/canvas-agent.json`.
+- **Default Toolset**: `mode: "core"` (mounts 10 high-frequency atomic tools).
+- **Ready out of the box without editing `cordis.patch.yml`**.
+
+### 2. Custom Parameters Override (Optional)
+
+To switch to all 30 granular tools, change tool prefixes, or adjust timeout, override specific fields targeting bundle id `awesome-canvas` in `~/.dsh/profiles/web/cordis.patch.yml`:
+
 ```yaml
 - id: awesome-canvas
-  name: dsh-awesome-canvas
   config:
-    url: 'http://127.0.0.1:17371'
+    mode: all           # Options: 'core' (recommended 10 tools) or 'all' (all 30 tools)
+    prefix: canvas_     # Tool name prefix (defaults to 'canvas_')
+    timeoutMs: 60000    # Per-call timeout in milliseconds
+```
+
+> **Note**: When installed via DSH, always use `- id: awesome-canvas` for property overrides. Do not use `- insert:` to avoid creating duplicate plugin instances.
+
+### 3. Custom Gateway URL & Token (Optional)
+
+If the gateway is hosted on a remote local-network server or custom port:
+```yaml
+- id: awesome-canvas
+  config:
+    url: 'http://192.168.1.100:17371'
     token: 'your-custom-token'
 ```
+
+### Configuration Options
+
+| Field | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `enabled` | `boolean` | `true` | Whether the Awesome Canvas direct plugin is enabled. |
+| `mode` | `'core' \| 'all'` | `'core'` | Tool exposure mode: `core` (10 high-frequency tools) or `all` (all 30 tools). |
+| `url` | `string` | `""` | Gateway URL. When empty, automatically read from `~/.awesome-canvas/canvas-agent.json`. |
+| `token` | `string` | `""` | Gateway Token. When empty, automatically read from `~/.awesome-canvas/canvas-agent.json`. |
+| `prefix` | `string` | `'canvas_'` | Tool name prefix registered into DSH. |
+| `timeoutMs` | `number` | `30000` | HTTP request timeout per tool invocation (ms). |
 
 ---
 
