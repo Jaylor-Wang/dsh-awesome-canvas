@@ -1,6 +1,6 @@
 {
   "name": "dsh-awesome-canvas",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Native zero-latency Cordis direct plugin for Awesome Canvas gateway, bypassing stdio sub-processes in DeepSeek Harness",
   "type": "module",
   "main": "lib/index.js",
